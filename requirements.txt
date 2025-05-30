@@ -1,0 +1,6 @@
+questionary
+pm4py
+pandas
+tabulate
+networkx
+matplotlib
