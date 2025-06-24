@@ -1,7 +1,7 @@
 from pm4py.objects.petri_net.obj import PetriNet, Marking # for creating marked Petri nets
 from pm4py.objects.petri_net.utils import petri_utils # for adding edges between places and transitions in a Petri net
 
-import DirectlyFollowsGraph as DFG # (internal) for calculating the DFG that defines the structure of the DFM
+from discovery import DirectlyFollowsGraph as DFG # (internal) for calculating the DFG that defines the structure of the DFM
 
 
 def directly_follows_miner(pm4py_log):
