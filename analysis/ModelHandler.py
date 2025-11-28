@@ -1,9 +1,11 @@
 import pm4py # for exporting pictures of Petri nets
 from tabulate import tabulate # for pretty printing tables
+import math
 
 import Constants # (internal) for the path of the output folder and color codes on command line
 from discovery import DiscoveryAlgorithms # (internal) for executing discovery algorithms
 from modelcomplexity import ModelComplexityMeasures # (internal) for calculating the complexity of models
+from analysis.MeasureRunner import timed_measure_calculation
 
 def calculate_models(miner, pm4py_logs, filename_prefix="", silent=False):
     """
@@ -40,9 +42,9 @@ def calculate_model_complexity_scores(model, measures: list):
     net, im, fm = model
     for measure in measures:
         if type(measure) in [ModelComplexityMeasures.Depth, ModelComplexityMeasures.Diameter]:
-            complexity_scores += [measure.calculate_for(net, im, fm)]
+            complexity_scores += [timed_measure_calculation(measure, net, im, fm)]
         else:
-            complexity_scores += [measure.calculate_for(net)]
+            complexity_scores += [timed_measure_calculation(measure, net, None, None)]
     return complexity_scores
 
 def highlight_norel_scores(complexity_scores: list):
@@ -58,6 +60,9 @@ def highlight_norel_scores(complexity_scores: list):
     # go through all columns and check if the scores can increase and decrease
     max_column_index = min([len(scores) for scores in complexity_scores])
     for i in range(max_column_index):
+        column_values = [row[i] for row in complexity_scores]
+        if any(v == -math.inf for v in column_values):
+            continue # Skip coloring if this column contains -inf
         strictly_decreasing = False
         strictly_increasing = False
         incomparable = False
@@ -103,8 +108,9 @@ def print_model_complexity_scores(models: list, measures: list, highlight_norel=
     for i in range(len(complexity_scores)):
         complexity_scores[i] = ["model " + str(i+1)] + complexity_scores[i]
     complexity_scores = [header] + complexity_scores
-    # print the table in a pretty way
-    print(tabulate(complexity_scores, headers='firstrow', tablefmt='fancy_grid'))
+    # print the table in a pretty way (left-aligned columns)
+    colalign = ("left",) * len(header)
+    print(tabulate(complexity_scores, headers='firstrow', tablefmt='fancy_grid', colalign=colalign))
 
 def show_model_comparison(miner, measures: list, pm4py_logs, filename_prefix="", colored=True, just_table=False):
     """

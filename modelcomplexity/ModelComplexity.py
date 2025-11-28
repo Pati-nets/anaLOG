@@ -359,15 +359,16 @@ def measure_diameter(model: PetriNet, initial_marking: Marking, final_marking: M
     """
     # Create a networkx graph that represents the Petri net
     model_graph = transform_to_networkx(model)
+    all_nodes = model_graph.nodes
     # calculate the longest path-length between a start and end node
     maximum_path_length = -math.inf
     # a start node is a node that is marked initially
-    for start_node in initial_marking.keys():
+    for start_node in all_nodes:
         # an end node is a node that contains a token in the final marking
-        for end_node in final_marking.keys():
+        for end_node in all_nodes:
             all_paths = list(networkx.all_simple_paths(model_graph, start_node, end_node))
             if len(all_paths) == 0:
-                longest_acyclic_path_length = math.inf
+                longest_acyclic_path_length = -math.inf
             else:
                 longest_acyclic_path_length = len(max(all_paths, key=lambda path: len(path)))
             if longest_acyclic_path_length > maximum_path_length:

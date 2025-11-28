@@ -14,7 +14,7 @@ def example_selector(miner: str, measure: str):
     PaperResults.show_analysis_for(measure, miner)
 
 def enter_paper_mode():
-    miners = [questionary.Choice(title=str(miner), value=miner) for miner in DiscoveryAlgorithms.all_discovery_algorithms]
+    miners = [questionary.Choice(title=str(miner), value=miner) for miner in DiscoveryAlgorithms.analyzed_discovery_algorithms]
     miner = questionary.select("Which mining algorithm are you interested in?", choices=miners).ask()
     complexity_question = "Alright! Which model-complexity measure do you wish to analyze?"
     measures = []

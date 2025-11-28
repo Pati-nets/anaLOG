@@ -5,3 +5,5 @@ tabulate
 networkx
 matplotlib
 tqdm
+lempel_ziv_complexity
+BitVector

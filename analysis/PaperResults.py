@@ -19,7 +19,7 @@ def show_measure_pair_in_leq(miner, measure, log_tuples_eq: list, log_tuples_les
     pm4py_logs = EventLogHandler.show_event_log_comparison(log_tuples_less[0], all_log_measures, filename)
     print("For your convenience, I highlighted the entries of this table that are strictly increasing in green.")
     ModelHandler.show_model_comparison(miner, all_model_measures, pm4py_logs, filename, False)
-    print("In this table, you can see that the " + str(measure).lower() + " score of the flower model " + direction + "d.")
+    print("In this table, you can see that the " + str(measure).lower() + " score of the model found by the " + str(miner).lower() + " " + direction + "d.")
     print("Thus, an increase in log-complexity can mean that the " + str(measure).lower() + " score " + direction + "es.")
     for i in range(1, len(log_tuples_less)):
         print()
@@ -52,7 +52,10 @@ def print_counter_example(measure, miner, log_triples: list):
         all_model_measures = ModelComplexityMeasures.dfg_model_complexity_measures
     else:
         all_model_measures = ModelComplexityMeasures.all_model_complexity_measures
-    print("Let me show you which log-complexity measures have no influence on the " + str(measure).lower() + " of the " + str(miner).lower() + ".")
+    print("Let me show you which log-complexity measures have no influence on the " + str(measure).lower() + " of the " + str(miner).lower() + ".\n")
+    if type(miner) == DiscoveryAlgorithms.HybridILPMiner:
+        print(f"Note: The Hybrid ILP Miner is not fully deterministic, and the discovered model may vary between runs. ")
+        print(f"As a result, some counterexamples may not show the expected X-relation even though they should. ")
     filename = str(miner).lower().replace(" ", "-") + "-vs-" + str(measure).lower().replace(" ", "-") + "-"
     pm4py_logs = EventLogHandler.show_event_log_comparison(log_triples[0], all_log_complexity_measures, filename)
     print("For your convenience, I highlighted the entries of this table that are strictly increasing in green.")
@@ -114,8 +117,8 @@ def trace_net_eq_entries(measure):
     print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
     print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
 
-def show_trace_net_analysis(measure):
-    tracenet_miner = DiscoveryAlgorithms.TraceNetMiner()
+def show_trace_net_analysis(measure, miner):
+    tracenet_miner = miner
     if type(measure) in [ModelComplexityMeasures.Size, ModelComplexityMeasures.ControlFlowComplexity,
                          ModelComplexityMeasures.AverageConnectorDegree, ModelComplexityMeasures.MaximumConnectorDegree]:
         print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are their trace nets.")
@@ -302,8 +305,9 @@ def show_alpha_miner_analysis(measure):
         print_counter_example(measure, alpha_miner, log_triples)
     elif type(measure) == ModelComplexityMeasures.NumberOfDuplicateTasks:
         print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the alpha miner for L1 and L2.")
-        print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
-        print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
+        print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2,")
+        print("since the alpha miner constructs exactly one transition for each event type.")
+        print("You can find the detailed proof for this conjecture in " + Constants.arxive_link + ".")
     else:
         raise Exception("Unexpected complexity measure " + str(measure))
     print("This concludes the analysis of the " + str(measure).lower() + " measure.")
@@ -480,7 +484,7 @@ def show_dfm_analysis(measure):
         log_triples = [[log1, log2, log3]]
         print_counter_example(measure, dfm, log_triples)
     elif type(measure) == ModelComplexityMeasures.ConnectorHeterogeneity:
-        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the alpha miner for L1 and L2.")
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the " + str(dfm).lower() + " for L1 and L2.")
         print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
         print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
     elif type(measure) == ModelComplexityMeasures.CrossConnectivity:
@@ -496,7 +500,7 @@ def show_dfm_analysis(measure):
         log_triples += [[log1, log2, log3]]
         print_counter_example(measure, dfm, log_triples)
     elif type(measure) == ModelComplexityMeasures.TokenSplit:
-        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the alpha miner for L1 and L2.")
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the " + str(dfm).lower() + " for L1 and L2.")
         print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
         print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
     elif type(measure) == ModelComplexityMeasures.ControlFlowComplexity:
@@ -631,9 +635,431 @@ def show_dfm_analysis(measure):
         log_tuples_less = [[log1, log2]]
         show_measure_pair_in_leq(dfm, measure, log_tuples_eq, log_tuples_less)
     elif type(measure) == ModelComplexityMeasures.NumberOfEmptySequenceFlows:
-        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the alpha miner for L1 and L2.")
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the " + str(dfm).lower() + " for L1 and L2.")
         print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
         print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
+    else:
+        raise Exception("Unexpected complexity measure " + str(measure))
+    print("This concludes the analysis of the " + str(measure).lower() + " measure.")
+#########################################################
+
+############ Inductive Miner Analysis ############
+def show_im_analysis(measure):
+    im = DiscoveryAlgorithms.InductiveMiner()
+    if type(measure) in [ModelComplexityMeasures.Size, ModelComplexityMeasures.CrossConnectivity,
+                         ModelComplexityMeasures.ControlFlowComplexity, ModelComplexityMeasures.Sequentiality,
+                         ModelComplexityMeasures.Cyclicity, ModelComplexityMeasures.Density, ModelComplexityMeasures.NumberOfDuplicateTasks]:
+        # Example without affinity:
+        log1 = ["abcd", "abcd", "d", "d"]
+        log2 = log1 + ["iabcbdcde"]
+        log3 = log2 + ["ghidcbcbcba"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["abcd", "d"]
+        log2 = log1 + ["abcd", "iabcbdcde"]
+        log3 = log2 + ["iabcbdcde", "iabcbdcde", "iabcbdcde", "ghidcbcbcba"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, im, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.ConnectorMismatch, ModelComplexityMeasures.Separability]:
+        # Example without affinity:
+        log1 = ["a", "abcd", "abcd"]
+        log2 = log1 + ["abcbcdef"]
+        log3 = log2 + ["adcbcbcbg"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["a", "abcd"]
+        log2 = log1 + ["abcbcdef"]
+        log3 = log2 + ["abcbcdef", "adcbcbcbg"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, im, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.ConnectorHeterogeneity, ModelComplexityMeasures.TokenSplit,
+                           ModelComplexityMeasures.Depth, ModelComplexityMeasures.Diameter]:
+        # Example without affinity:
+        log1 = ["abcd", "abcd", "e", "e"]
+        log2 = log1 + ["acbcd", "ef"]
+        log3 = log2 + ["abcbcd", "acbcbcd", "efg"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["abcd", "e"]
+        log2 = log1 + ["abcd", "acbcd", "ef"]
+        log3 = log2 + ["acbcd", "acbcd", "abcbcd", "acbcbcd", "efg"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, im, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.AverageConnectorDegree, ModelComplexityMeasures.MaximumConnectorDegree]:
+        # Example without affinity:
+        log1 = ["abf", "abf", "abf", "acf", "acf", "acf"]
+        log2 = log1 + ["gadf", "gadf", "gaef", "gaef"]
+        log3 = log2 + ["abcdfh", "adcbfh"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["abf", "acf"]
+        log2 = log1 + ["abf", "gadf", "gaef"]
+        log3 = log2 + ["gadf", "gadf", "gadf", "abcdfh", "adcbfh"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, im, log_triples)
+    elif type(measure) == ModelComplexityMeasures.CoefficientOfNetworkConnectivity:
+        log1 = ["abcd", "abcd", "abcd", "e", "e"]
+        log2 = log1 + ["abcd", "abcd", "abcd", "acbd", "abcbcd", "abcbcd", "abcbcd", "bcbcbcd", "abcfefe"]
+        log3 = log2 + ["abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcbcd", "aabbccdd", "eeffgg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, im, log_triples)
+    elif type(measure) == ModelComplexityMeasures.NumberOfEmptySequenceFlows:
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the inductive miner for L1 and L2.")
+        print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
+        print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
+    else:
+        raise Exception("Unexpected complexity measure " + str(measure))
+    print("This concludes the analysis of the " + str(measure).lower() + " measure.")
+##################################################
+
+############ Heuristic Miner Analysis ############
+def show_hm_analysis(measure):
+    hm = DiscoveryAlgorithms.HeuristicsMiner()
+    if type(measure) in [ModelComplexityMeasures.Size, ModelComplexityMeasures.ConnectorMismatch,
+                         ModelComplexityMeasures.TokenSplit, ModelComplexityMeasures.MaximumConnectorDegree,
+                         ModelComplexityMeasures.Sequentiality, ModelComplexityMeasures.Diameter,
+                         ModelComplexityMeasures.Density, ModelComplexityMeasures.NumberOfDuplicateTasks]:
+        # Example without t-comp and DT-%:
+        log1 = ["a", "abcdefgh"]
+        log2 = log1 + ["abcdefgh", "agfedcbhi", "agfedcbhi"]
+        log3 = log2 + ["abcdefghij", "abcdefghij", "tuvwxyz"]
+        log_triples = [[log1, log2, log3]]
+        # Example for t-comp and DT-%:
+        log1 = ["a", "a", "a", "abcdefghi"]
+        log2 = log1 + ["ah", "ai", "aj", "abcdefghi", "agfedcbhij", "agfedcbhij"]
+        log3 = log2 + ["abcdefghijk", "abcdefghijk", "stuvwxyz"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hm, log_triples)
+        print("A counter-example for t-comp and DT-% is still MISSING.")
+    elif type(measure) in [ModelComplexityMeasures.ConnectorHeterogeneity, ModelComplexityMeasures.CrossConnectivity,
+                           ModelComplexityMeasures.AverageConnectorDegree, ModelComplexityMeasures.CoefficientOfNetworkConnectivity]:
+        # Example without affinity:
+        log1 = ["a", "a", "abde", "acdf"]
+        log2 = log1 + ["abcdf", "acbdg"]
+        log3 = log2 + ["abcdefgh", "abcdefgi"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["a", "axyzzzf", "abcdef", "ayxzf"]
+        log2 = log1 + ["axyzf", "axyzf", "axyzf", "abcdef"]
+        log3 = log2 + ["abcdef", "abcdef", "abcdefgh", "abcdegfh", "axyzzzzh"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hm, log_triples)
+        print("A counter-example for affinity is still MISSING.")
+    elif type(measure) in [ModelComplexityMeasures.ControlFlowComplexity, ModelComplexityMeasures.CoefficientOfNetworkConnectivity,
+                           ModelComplexityMeasures.Separability]:
+        # Example without affinity:
+        log1 = ["abe", "abe", "abe", "abe", "abe", "ace", "ade"]
+        log2 = log1 + ["abcdef", "abcdef"]
+        log3 = log2 + ["acbdefg", "xy"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["a", "axyzzzf", "abcdef", "ayxzf"]
+        log2 = log1 + ["axyzf", "axyzf", "axyzf", "abcdef"]
+        log3 = log2 + ["abcdef", "abcdef", "abcdefgh", "abcdegfh", "axyzzzzh"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hm, log_triples)
+        print("A counter-example for affinity is still MISSING.")
+    elif type(measure) in [ModelComplexityMeasures.Cyclicity]:
+        # Example without affinity:
+        log1 = ["bcde", "bcde"]
+        log2 = log1 + ["abcbcdf"]
+        log3 = log2 + ["abcbcdeg", "abcbcdfg", "xyz"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["a", "axyzzzf", "abcdef", "ayxzf"]
+        log2 = log1 + ["axyzf", "axyzf", "axyzf", "abcdef"]
+        log3 = log2 + ["abcdef", "abcdef", "abcdefgh", "abcdegfh", "axyzzzzh"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hm, log_triples)
+    elif type(measure) == ModelComplexityMeasures.Depth:
+        # Example without affinity, nvar-e and nseq-e:
+        log1 = ["abcd", "abcd", "abcd", "acbd"]
+        log2 = log1 + ["abcde", "abcdef", "abcdefg", "abcdefgh"]
+        log3 = log2 + ["abcdefghi", "abcdefhgi"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["a", "axyzzzf", "abcdef", "ayxzf"]
+        log2 = log1 + ["axyzf", "axyzf", "axyzf", "abcdef"]
+        log3 = log2 + ["abcdef", "abcdef", "abcdefgh", "abcdegfh", "axyzzzzh"]
+        log_triples += [[log1, log2, log3]]
+        # Example for nvar-e and nseq-e:
+        log1 = ["a", "ayxzf", "axyzzzf", "aef"]
+        log2 = log1 + ["axyzf", "axyzf", "axyzf", "abcdefg"]
+        log3 = log2 + ["aef", "abcdefgh", "abcdegfh", "axyzzzzzzzh"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hm, log_triples)
+        print("A counter-example for the depth is still MISSING.")
+    elif type(measure) == ModelComplexityMeasures.NumberOfEmptySequenceFlows:
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the inductive miner for L1 and L2.")
+        print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
+        print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
+    else:
+        raise Exception("Unexpected complexity measure " + str(measure))
+    print("This concludes the analysis of the " + str(measure).lower() + " measure.")
+##################################################
+
+################## Alpha Robust Miner, Alpha Dollar Miner, Alpha Plus Miner Analysis ##################
+def show_alpha_robust_dollar_plus_analysis(measure, miner):
+    alpha_version_miner = miner
+    if type(measure) in [ModelComplexityMeasures.Size, ModelComplexityMeasures.ConnectorMismatch,
+                         ModelComplexityMeasures.TokenSplit, ModelComplexityMeasures.ControlFlowComplexity,
+                         ModelComplexityMeasures.Separability, ModelComplexityMeasures.AverageConnectorDegree,
+                         ModelComplexityMeasures.MaximumConnectorDegree, ModelComplexityMeasures.Diameter,
+                         ModelComplexityMeasures.Cyclicity, ModelComplexityMeasures.CoefficientOfNetworkConnectivity,
+                         ModelComplexityMeasures.NumberOfEmptySequenceFlows]:
+        log1 = ["abcde", "abcde", "abcde", "e", "e"]
+        log2 = log1 + ["abcdbcdef", "abcdbcdef"]
+        log3 = log2 + ["abcdbcdbcde", "abcdbcdbcde", "abcdbcdbcdbcdde", "aabbccddeeffgghhii"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, alpha_version_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.ConnectorHeterogeneity, ModelComplexityMeasures.Depth,
+                           ModelComplexityMeasures.Density]:
+        log1 = ["abcd", "abcd", "abcd", "e", "e"]
+        log2 = log1 + ["acbd", "abcd", "abcd", "abcd", "abcbcd", "abcbcd", "abcbcd", "bcbcbcd", "abcfefe"]
+        log3 = log2 + ["abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcbcd", "aabbccdd", "eeffgg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, alpha_version_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.CrossConnectivity, ModelComplexityMeasures.Sequentiality]:
+        log1 = ["abd", "abd", "acd", "acd", "e"]
+        log2 = log1 + ["abde", "acde", "abcd", "abcbdef", "abcbcbdef"]
+        log3 = log2 + ["acbd", "acbcbde", "abcbcbcd", "abcbcbcbcd", "aabbccddeeffgg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, alpha_version_miner, log_triples)
+    elif type(measure) == ModelComplexityMeasures.NumberOfDuplicateTasks:
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the " + str(alpha_version_miner).lower() + " for L1 and L2.")
+        print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
+        print("This argument follows analogously from the proof given for the classical Alpha Miner.")
+        print("You can find the original proof for this conjecture in " + Constants.arxive_link + ".")
+    else:
+        raise Exception("Unexpected complexity measure " + str(measure))
+    print("This concludes the analysis of the " + str(measure).lower() + " measure.")
+##########################################################
+
+############ Alpha Plus Plus Miner Analysis ############
+def show_alpha_plusplus_analysis(measure):
+    alpha_plus_plus_miner = DiscoveryAlgorithms.AlphaPlusPlusMiner()
+    if type(measure) in [ModelComplexityMeasures.ConnectorMismatch, ModelComplexityMeasures.ConnectorHeterogeneity,
+                         ModelComplexityMeasures.Density]:
+        log1 = ["abcde", "abcde", "abcde", "e", "e"]
+        log2 = log1 + ["abcdbcdef", "abcdbcdef"]
+        log3 = log2 + ["abcdbcdbcde", "abcdbcdbcde", "abcdbcdbcdbcdde", "aabbccddeeffgghhii"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, alpha_plus_plus_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.TokenSplit, ModelComplexityMeasures.ControlFlowComplexity,
+                           ModelComplexityMeasures.AverageConnectorDegree, ModelComplexityMeasures.MaximumConnectorDegree,
+                           ModelComplexityMeasures.Sequentiality, ModelComplexityMeasures.Depth,
+                           ModelComplexityMeasures.Diameter, ModelComplexityMeasures.CoefficientOfNetworkConnectivity,
+                           ModelComplexityMeasures.NumberOfEmptySequenceFlows]:
+        log1 = ["abcd", "abcd", "abcd", "e", "e"]
+        log2 = log1 + ["acbd", "abcd", "abcd", "abcd", "abcbcd", "abcbcd", "abcbcd", "bcbcbcd", "abcfefe"]
+        log3 = log2 + ["abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcbcd", "aabbccdd", "eeffgg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, alpha_plus_plus_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.CrossConnectivity]:
+        log1 = ["abd", "abd", "acd", "acd", "e"]
+        log2 = log1 + ["abde", "acde", "abcd", "abcbdef", "abcbcbdef"]
+        log3 = log2 + ["acbd", "acbcbde", "abcbcbcd", "abcbcbcbcd", "aabbccddeeffgg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, alpha_plus_plus_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.Separability, ModelComplexityMeasures.Cyclicity]:
+        # Example without affinity:
+        log1 = ["abcde", "abcde", "abcde", "edcab", "edcab", "edcab"]
+        log2 = log1 + ["afedcb", "afedcb"]
+        log3 = log2 + ["gbcdefc", "gbcdefc"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["abcde", "edcab"]
+        log2 = log1 + ["afedcb", "afedcb"]
+        log3 = log2 + ["gbcdefc", "gbcdefc", "gbcdefc", "gbcdefc"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, alpha_plus_plus_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.Size]:
+        log1 = ["abd", "abd", "acd", "acd", "e"]
+        log2 = log1 + ["abde", "acde", "abcd", "abcbdef", "abcbcbdef"]
+        log3 = log2 + ["acbd", "acbcbde", "abcbcbcd", "abcbcbcbcd", "aabbccddeeffg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, alpha_plus_plus_miner, log_triples)
+    elif type(measure) == ModelComplexityMeasures.NumberOfDuplicateTasks:
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found by the " + str(alpha_plus_plus_miner).lower() + " for L1 and L2.")
+        print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
+        print("This argument follows analogously from the proof given for the classical Alpha Miner.")
+        print("You can find the original proof for this conjecture in " + Constants.arxive_link + ".")
+    else:
+        raise Exception("Unexpected complexity measure " + str(measure))
+    print("This concludes the analysis of the " + str(measure).lower() + " measure.")
+##################################################
+
+############ Hybrid ILP Miner Analysis ############
+def show_hybrid_ilp_analysis(measure):
+    hybrid_ilp_miner = DiscoveryAlgorithms.HybridILPMiner()
+    if type(measure) in [ModelComplexityMeasures.Size, ModelComplexityMeasures.ConnectorHeterogeneity,
+                         ModelComplexityMeasures.CrossConnectivity, ModelComplexityMeasures.Separability,
+                         ModelComplexityMeasures.Diameter, ModelComplexityMeasures.Cyclicity]:
+        log1 = ["abd", "abd", "acd", "acd", "e"]
+        log2 = log1 + ["abde", "acde", "abcd", "abcbdef", "abcbcbdef"]
+        log3 = log2 + ["acbd", "acbcbde", "abcbcbcd", "abcbcbcbcd", "aabbccddeeffgg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, hybrid_ilp_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.AverageConnectorDegree]:
+        # Example without affinity:
+        log1 = ["abde", "abde", "acde", "acde", "abcde", "e", "acbde"]
+        log2 = log1 + ["abdacd", "abdacd", "abcdefg", "abxde"]
+        log3 = log2 + ["abdabdacd", "abcdefh", "abxdacd", "abxabcdefg"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["sae", "sbe"]
+        log2 = log1 + ["sabcde", "sdcbae", "sacdbe", "sbdace", "scabde", "sbadce"]
+        log3 = log2 + ["sabcdxye", "sabcdyxe", "sabcdxye", "sabcdyxe", "sabcdxye", "sabcdyxe"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hybrid_ilp_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.TokenSplit, ModelComplexityMeasures.NumberOfEmptySequenceFlows]:
+        # Example without DT-%:
+        log1 = ["abde", "abde", "acde", "acde", "abcde", "e"]
+        log2 = log1 + ["abdacd", "abdacd", "abcdefg"]
+        log3 = log2 + ["abdabdacd", "abcdefh"]
+        log_triples = [[log1, log2, log3]]
+        # Example for DT-%:
+        log1 = ["abde", "abde", "acde", "acde", "abcde", "e"]
+        log2 = log1 + ["abdacd", "abdacd", "abcdefg", "abxde"]
+        log3 = log2 + ["abdabdacd", "abcdefh", "abxdacd", "abxabcdefg"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hybrid_ilp_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.ControlFlowComplexity, ModelComplexityMeasures.MaximumConnectorDegree,
+                           ModelComplexityMeasures.Sequentiality, ModelComplexityMeasures.Depth,
+                           ModelComplexityMeasures.CoefficientOfNetworkConnectivity]:
+        # Example without affinity:
+        log1 = ["ab", "ab", "cx", "cx", "dy", "dy", "ez"]
+        log2 = log1 + ["ab", "agb", "aggb"]
+        log3 = log2 + ["agggb", "agggb", "bc", "hi"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["ab", "ab", "ac", "ad", "e"]
+        log2 = log1 + ["axxxb", "axxxb", "axxxb", "axxxb"]
+        log3 = log2 + ["ab", "ab", "ab", "ab", "ab", "ab", "ab", "ab"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hybrid_ilp_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.Density]:
+        # Example without TL-max, DT-%, affinity:
+        log1 = ["abd", "abd", "acd", "acd", "e"]
+        log2 = log1 + ["axc", "axc", "ayc", "azc", "awc"]
+        log3 = log2 + ["amnc", "amnc", "amnc", "apc", "azx"]
+        log_triples = [[log1, log2, log3]]
+        # Example for TL-max, DT-%, affinity:
+        log1 = ["ab", "ab", "ac", "ad", "e"]
+        log2 = log1 + ["acb", "cab", "bac", "bca"]
+        log3 = log2 + ["axc", "axxc", "axxxc", "axxxyc", "axxxxxc"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hybrid_ilp_miner, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.ConnectorMismatch]:
+        # Example without DT-%:
+        log1 = ["abde", "abde", "acde", "acde", "abcde", "e"]
+        log2 = log1 + ["abdacd", "abdacd", "abcdefg"]
+        log3 = log2 + ["abdabdacd", "abcdefh"]
+        log_triples = [[log1, log2, log3]]
+        # Example for DT-%:
+        log1 = ["abde", "abde", "acde", "acde", "abcde", "e"]
+        log2 = log1 + ["abdacd", "abdacde", "abcdefg"]
+        log3 = log2 + ["abdabdacd", "abcdefh"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, hybrid_ilp_miner, log_triples)
+    elif type(measure) == ModelComplexityMeasures.NumberOfDuplicateTasks:
+        print("The Hybrid ILP Miner always produces exactly one duplicate task label.")
+        print("The miner creates exactly one transition for each activity in the log, and these transitions receive "
+              "unique labels corresponding to their activities, so no original activity label can appear more than once.")
+        print("The miner also introduces two fresh activities for the start and the finish. The transitions "
+              "generated for these activities are both assigned the label τ. Since no additional τ-labeled transitions "
+              "are created, τ appears exactly twice.")
+        print("Thus, the model always contains one duplicate task label, namely τ.")
+        print("This follows directly from the description of the miner in " + Constants.paper_hybrid_ilp_miner + ".")
+    else:
+        raise Exception("Unexpected complexity measure " + str(measure))
+    print("This concludes the analysis of the " + str(measure).lower() + " measure.")
+##################################################
+
+############ ProM4Py Directly Follows Miner Analysis ############
+def show_dfm_prom4py_analysis(measure):
+    dfm = DiscoveryAlgorithms.DirectlyFollowsMinerProM4Py()
+    if type(measure) in [ModelComplexityMeasures.ConnectorMismatch, ModelComplexityMeasures.Depth]:
+        log1 = ["abcd", "abcd", "abcd", "e", "e"]
+        log2 = log1 + ["acbd", "abcd", "abcd", "abcd", "abcbcd", "abcbcd", "abcbcd", "bcbcbcd", "abcfefe"]
+        log3 = log2 + ["abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcd", "abcbcbcbcbcd", "aabbccdd", "eeffgg"]
+        log_triples = [[log1, log2, log3]]
+        print_counter_example(measure, dfm, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.CrossConnectivity, ModelComplexityMeasures.Sequentiality,
+                           ModelComplexityMeasures.Cyclicity, ModelComplexityMeasures.CoefficientOfNetworkConnectivity]:
+        # Example without affinity:
+        log1 = ["a", "abc", "abc", "abc", "abc", "abc"]
+        log2 = log1 + ["aabbccdd"]
+        log3 = log2 + ["aabbccdd", "fghijklmnopq"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["a", "abc"]
+        log2 = log1 + ["aabbccdd"]
+        log3 = log2 + ["aabbccdd", "fghijklmnopq"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, dfm, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.Separability, ModelComplexityMeasures.AverageConnectorDegree]:
+        # Example without affinity:
+        log1 = ["aabbccdd", "aabbccdd", "bcd", "bcd", "bcd"]
+        log2 = log1 + ["bcd", "aabbccddee", "abcde"]
+        log3 = log2 + ["aaabbbcccdddeee", "uvxxyz"]
+        log_triples = [[log1, log2, log3]]
+        # Example for affinity:
+        log1 = ["a", "abc"]
+        log2 = log1 + ["aabbccdd"]
+        log3 = log2 + ["aabbccdd", "fghijklmnopq"]
+        log_triples += [[log1, log2, log3]]
+        print_counter_example(measure, dfm, log_triples)
+    elif type(measure) in [ModelComplexityMeasures.ConnectorHeterogeneity, ModelComplexityMeasures.TokenSplit,
+                           ModelComplexityMeasures.NumberOfEmptySequenceFlows]:
+        print("Suppose L1 and L2 are event logs, where L1 is a subset of L2, and M1 and M2 are the models found for L1 and L2.")
+        print("Then, the " + str(measure).lower() + " score is always the same for M1 and M2.")
+        print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
+    elif type(measure) in [ModelComplexityMeasures.Size, ModelComplexityMeasures.ControlFlowComplexity,
+                           ModelComplexityMeasures.NumberOfDuplicateTasks]:
+        print("First, observe that var(L1) < var(L2), LOD(L1) < LOD(L2), and t-comp(L1) < t-comp(L2) always implies an increase in " + str(measure).lower() + ".")
+        print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
+        print()
+        # Equal Example without affinity:
+        log1 = ["abcc", "abcc", "ccde"]
+        log2 = log1 + ["abcde"]
+        log_tuples_eq = [[log1, log2]]
+        # Equal Example for affinity:
+        log1 = ["abcc", "ccde"]
+        log2 = log1 + ["abcde"]
+        log_tuples_eq += [[log1, log2]]
+        # Increase Example:
+        log1 = ["abcd", "abcd", "abcde", "abcde", "deab", "deab"]
+        log2 = log1 + ["abcde", "abcde", "deabc", "cdeab", "ecdabcf"]
+        log_tuples_less = [[log1, log2]]
+        show_measure_pair_in_leq(dfm, measure, log_tuples_eq, log_tuples_less)
+    elif type(measure) == ModelComplexityMeasures.Density:
+        print("First, observe that var(L1) < var(L2) always implies a decrease in " + str(measure).lower() + ".")
+        print("You can find the proof for this conjecture in " + Constants.arxive_link + ".")
+        print()
+        # Equal Example without affinity:
+        log1 = ["abcc", "abcc", "ccde"]
+        log2 = log1 + ["abcde"]
+        log_tuples_eq = [[log1, log2]]
+        # Equal Example for affinity:
+        log1 = ["abcc", "ccde"]
+        log2 = log1 + ["abcde"]
+        log_tuples_eq += [[log1, log2]]
+        # Decrease Example:
+        log1 = ["abcd", "abcd", "abcde", "abcde", "deab", "deab"]
+        log2 = log1 + ["abcde", "abcde", "deabc", "cdeab", "ecdabcf"]
+        log_tuples_less = [[log1, log2]]
+        show_measure_pair_in_leq(dfm, measure, log_tuples_eq, log_tuples_less, "decreas")
+    elif type(measure) in [ModelComplexityMeasures.MaximumConnectorDegree, ModelComplexityMeasures.Diameter]:
+        # Equal Example:
+        log1 = ["abcc", "c", "c", "ccde"]
+        log2 = log1 + ["abcde", "abffde", "abfffde", "abffffde", "abffffde"]
+        log_tuples_eq = [[log1, log2]]
+        # Increase Example:
+        log1 = ["abcd", "abcd", "abcde", "abcde", "deab", "deab"]
+        log2 = log1 + ["abcde", "abcde", "deabc", "cdeab", "ecdabcf"]
+        log_tuples_less = [[log1, log2]]
+        show_measure_pair_in_leq(dfm, measure, log_tuples_eq, log_tuples_less)
     else:
         raise Exception("Unexpected complexity measure " + str(measure))
     print("This concludes the analysis of the " + str(measure).lower() + " measure.")
@@ -642,13 +1068,25 @@ def show_dfm_analysis(measure):
 def show_analysis_for(measure: str, miner: str):
     if type(miner) == DiscoveryAlgorithms.FlowerModelMiner:
         show_flower_model_analysis(measure)
-    elif type(miner) == DiscoveryAlgorithms.TraceNetMiner:
-        show_trace_net_analysis(measure)
+    elif type(miner) in [DiscoveryAlgorithms.TraceNetMiner, DiscoveryAlgorithms.TraceNetMinerProM4Py]:
+        show_trace_net_analysis(measure, miner)
     elif type(miner) == DiscoveryAlgorithms.AlphaMiner:
         show_alpha_miner_analysis(measure)
     elif type(miner) == DiscoveryAlgorithms.DirectlyFollowsGraphMiner:
         show_dfg_analysis(measure)
     elif type(miner) == DiscoveryAlgorithms.DirectlyFollowsModelMiner:
         show_dfm_analysis(measure)
+    elif type(miner) == DiscoveryAlgorithms.InductiveMiner:
+        show_im_analysis(measure)
+    elif type(miner) == DiscoveryAlgorithms.HeuristicsMiner:
+        show_hm_analysis(measure)
+    elif type(miner) in [DiscoveryAlgorithms.AlphaRobustMiner, DiscoveryAlgorithms.AlphaDollarMiner, DiscoveryAlgorithms.AlphaPlusMiner]:
+        show_alpha_robust_dollar_plus_analysis(measure, miner)
+    elif type(miner) == DiscoveryAlgorithms.AlphaPlusPlusMiner:
+        show_alpha_plusplus_analysis(measure)
+    elif type(miner) == DiscoveryAlgorithms.HybridILPMiner:
+        show_hybrid_ilp_analysis(measure)
+    elif type(miner) == DiscoveryAlgorithms.DirectlyFollowsMinerProM4Py:
+        show_dfm_prom4py_analysis(measure)
     else:
         raise Exception("Unexpected mining algorithm: " + str(miner))

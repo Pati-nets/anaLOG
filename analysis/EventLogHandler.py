@@ -2,9 +2,11 @@ import pm4py # for exporting the event log as an .xes file
 import pandas # for internal representations of event logs
 from datetime import datetime # for including artificial timestamps
 from tabulate import tabulate # for pretty printing tables
+import math
 
 import Constants # (internal) for color-codes and event log specifier names
 from logcomplexity import Complexity as LogComplexity # (internal) for generating event logs in pm4py format
+from analysis.MeasureRunner import timed_measure_calculation
 
 
 def convert_language_to_dataframe(language):
@@ -97,7 +99,7 @@ def calculate_log_complexity_scores(event_log, measures: list):
     """
     complexity_scores = []
     for measure in measures:
-        complexity_scores += [measure.calculate_for(event_log)]
+        complexity_scores += [timed_measure_calculation(measure, event_log, None, None)]
     return complexity_scores
 
 def highlight_strictly_increasing_scores(complexity_scores: list):
@@ -112,6 +114,9 @@ def highlight_strictly_increasing_scores(complexity_scores: list):
     # go through all columns and check if the scores are strictly increasing
     max_column_index = min([len(scores) for scores in complexity_scores])
     for i in range(max_column_index):
+        column_values = [row[i] for row in complexity_scores]
+        if any(v == -math.inf for v in column_values):
+            continue # Skip coloring if this column contains -inf
         strictly_increasing = True
         incomparable = False
         for j in range(1, len(complexity_scores)):
@@ -155,8 +160,9 @@ def print_log_complexity_scores(pm4py_logs: list, measures: list, highlight_incr
     for i in range(len(complexity_scores)):
         complexity_scores[i] = ["log " + str(i+1)] + complexity_scores[i]
     complexity_scores = [header] + complexity_scores
-    # print the table in a pretty way
-    print(tabulate(complexity_scores, headers='firstrow', tablefmt='fancy_grid'))
+    # print the table in a pretty way (left-aligned columns)
+    colalign = ("left",) * len(header)
+    print(tabulate(complexity_scores, headers='firstrow', tablefmt='fancy_grid', colalign=colalign))
 
 def show_event_log_comparison(event_logs: list, measures: list, logname_prefix=""):
     """

@@ -2,12 +2,12 @@ from tabulate import tabulate # for pretty printing of tables
 from tqdm import tqdm # for showing a progress bar
 
 from modelcomplexity import ModelComplexityMeasures # (internal) for calculating model complexity scores
-
+from analysis.MeasureRunner import timed_measure_calculation
 
 def calculate_log_complexity_scores(event_log, measures: list):
     complexity_scores = []
     for measure in measures:
-        complexity_scores += [measure.calculate_for(event_log)]
+        complexity_scores += [timed_measure_calculation(measure, event_log, None, None)]
     return complexity_scores
 
 def calculate_model_complexity_scores(event_log, miner, measures: list):
@@ -15,9 +15,9 @@ def calculate_model_complexity_scores(event_log, miner, measures: list):
     net, im, fm = miner.discover_for(event_log)
     for measure in measures:
         if type(measure) in [ModelComplexityMeasures.Depth, ModelComplexityMeasures.Diameter]:
-            complexity_scores += [measure.calculate_for(net, im, fm)]
+            complexity_scores += [timed_measure_calculation(measure, net, im, fm)]
         else:
-            complexity_scores += [measure.calculate_for(net)]
+            complexity_scores += [timed_measure_calculation(measure, net, None, None)]
     return complexity_scores
 
 def update_relation_table(relation_table, row_index, column_index, score1, score2):
@@ -64,11 +64,13 @@ def investigate_real_life_log(event_log, log_threshold: int, log_measures: list,
         for j in range(len(model_column_names)):
             row += [''] # use empty string as initial placeholder
         found_relations += [row]
-    previous_log_complexity_scores = calculate_log_complexity_scores(event_log[:1], log_measures)
-    previous_model_complexity_scores = calculate_model_complexity_scores(event_log[:1], mining_algorithm, model_measures)
+    prefix_log = event_log.__class__()
+    prefix_log.append(event_log[0])
+    previous_log_complexity_scores = calculate_log_complexity_scores(prefix_log, log_measures)
+    previous_model_complexity_scores = calculate_model_complexity_scores(prefix_log, mining_algorithm, model_measures)
     try:
         for i in tqdm(range(1, log_threshold + 1), desc="calculating relations in the event log"):
-            prefix_log = event_log[:i+1]
+            prefix_log.append(event_log[i])
             log_complexity_scores = calculate_log_complexity_scores(prefix_log, log_measures)
             model_complexity_scores = calculate_model_complexity_scores(prefix_log, mining_algorithm, model_measures)
             # if some log complexity score increased, update the relation table
